@@ -6,10 +6,11 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/600lyy/go_study/accountservice/model"
+	"github.com/600lyy/accountservice/model"
 	"github.com/boltdb/bolt"
 )
 
+//IBoltClient interface
 type IBoltClient interface {
 	OpenBoltDb()
 	QueryAccount(accoundId string) (model.Account, error)
@@ -17,6 +18,7 @@ type IBoltClient interface {
 	Check() bool
 }
 
+//BoltClient uses *bolt.DB
 type BoltClient struct {
 	boltDB *bolt.DB
 }
@@ -50,7 +52,7 @@ func (bc *BoltClient) QueryAccount(accoundID string) (account model.Account, err
 // Seed starts seeding accounts
 func (bc *BoltClient) Seed() {
 	bc.initializeBucket()
-	bc.seedAccounts()
+	bc.seedDemoAccounts()
 }
 
 // Check db connection
@@ -69,9 +71,9 @@ func (bc *BoltClient) initializeBucket() error {
 }
 
 // Seed (n) make-believe account objects into the AcountBucket bucket.
-func (bc *BoltClient) seedAccounts() {
+func (bc *BoltClient) seedDemoAccounts() {
 
-	total := 100
+	total := 10
 	for i := 0; i < total; i++ {
 
 		// Generate a key 10000 or larger
@@ -79,8 +81,9 @@ func (bc *BoltClient) seedAccounts() {
 
 		// Create an instance of our Account struct
 		acc := model.Account{
-			Id:   key,
-			Name: "Person_" + strconv.Itoa(i),
+			Id:   	key,
+			Name: 	"user_" + strconv.Itoa(i),
+			Passwd:	"123456",
 		}
 
 		// Serialize the struct to JSON
@@ -93,5 +96,5 @@ func (bc *BoltClient) seedAccounts() {
 			return err
 		})
 	}
-	fmt.Printf("Seeded %v fake accounts...\n", total)
+	fmt.Printf("Seeded %v demo accounts...\n", total)
 }

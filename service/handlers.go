@@ -11,6 +11,7 @@ import (
 
 // DBClient is a global variable
 var DBClient dbclient.IBoltClient
+var RedisClient dbclient.IRedisClient
 
 // GetAccount returns an account
 func GetAccount(w http.ResponseWriter, r *http.Request) {

@@ -30,4 +30,18 @@ var routes = Routes{
 		"/health",
 		HealthCheck,
 	},
+
+	Route{
+		Name:        "Login",
+		Method:      "GET",
+		Pattern:     "/login",
+		HandlerFunc: Login,
+	},
+
+	Route{
+		Name:        "SignUp",
+		Method:      "POST",
+		Pattern:     "/signup",
+		HandlerFunc: SignUp,
+	},
 }
