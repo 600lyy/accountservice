@@ -14,7 +14,7 @@ func StartWebServer(port string) {
 	// http.HandleFunc("/accounts", routes[0].HandlerFunc)
 	err := http.ListenAndServe(":" + port, nil)
 	if err != nil {
-		log.Fatal("An error occurred starting HTTP listenser at port " + port)
-		log.Println("Error: " + err.Error())
+		//log.Fatal("An error occurred starting HTTP listenser at port " + port)
+		log.Fatal("Error: " + err.Error())
 	}
 }

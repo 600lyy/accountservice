@@ -14,6 +14,7 @@ import (
 type IBoltClient interface {
 	OpenBoltDb()
 	QueryAccount(accoundId string) (model.Account, error)
+	CreateAccount(account *model.Account) (err error)
 	Seed()
 	Check() bool
 }
@@ -47,6 +48,21 @@ func (bc *BoltClient) QueryAccount(accoundID string) (account model.Account, err
 	})
 
 	return  //bare return
+}
+
+func (bc *BoltClient) CreateAccount(account *model.Account) (err error) {
+	var jsonByte []byte
+	if jsonByte, err = json.Marshal(account); err !=nil {
+		fmt.Errorf("cannnot marshal json: %v", err)
+		return err
+	}
+	err = bc.boltDB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("AccountBucket"))
+		err := b.Put([]byte(account.Id), jsonByte)
+		return err
+	})
+
+	return nil
 }
 
 // Seed starts seeding accounts

@@ -1,12 +1,17 @@
 package service
 
 import (
+	"fmt"
+	"io"
+	"io/ioutil"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/600lyy/go_study/accountservice/dbclient"
 	"github.com/gorilla/mux"
+
+	"github.com/600lyy/accountservice/dbclient"
+	"github.com/600lyy/accountservice/model"
 )
 
 // DBClient is a global variable
@@ -42,6 +47,19 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 		data, _ := json.Marshal(healthCheckResponse{Status: "Database unaccessible"})
 		writeJSONResponse(w, http.StatusServiceUnavailable, data)
 	}
+}
+
+func CreateAccount(w http.ResponseWriter, r *http.Request) {
+	account := model.Account{}
+	body, err := ioutil.ReadAll(&io.LimitedReader{r.Body, 10485760})
+	defer r.Body.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err = json.Unmarshal(body, &account); err != nil {
+		fmt.Errorf("cannnot Unmarshal json: %v", err)
+	}
+	DBClient.CreateAccount(&account)
 }
 
 func writeJSONResponse(w http.ResponseWriter, status int, data []byte) {

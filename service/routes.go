@@ -33,15 +33,9 @@ var routes = Routes{
 
 	Route{
 		Name:        "Login",
-		Method:      "GET",
+		Method:      "POST",
 		Pattern:     "/login",
-		HandlerFunc: Login,
+		HandlerFunc: CreateAccount,
 	},
 
-	Route{
-		Name:        "SignUp",
-		Method:      "POST",
-		Pattern:     "/signup",
-		HandlerFunc: SignUp,
-	},
 }
