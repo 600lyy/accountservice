@@ -2,8 +2,9 @@ package model
 
 // Account delcarition with built-in json serialization
 type Account struct {
-	Id       string `json:"id"`
-	Name     string `json:"name"`
-	Passwd	 string `json:"password"`
+	ID       uint64 `json:"id"`
+	UserName string `json:"username"` //Primary Key
+	Name	 string `json:"Name"`
+	Passwd	 string `json:"password,omitempty"`
 	ServedBy string `json:"servedBy"`
 }

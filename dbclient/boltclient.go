@@ -13,8 +13,9 @@ import (
 //IBoltClient interface
 type IBoltClient interface {
 	OpenBoltDb()
-	QueryAccount(accoundId string) (model.Account, error)
+	QueryAccount(username string) (model.Account, error)
 	CreateAccount(account *model.Account) (err error)
+	QueryAllDemoAccounts() (accounts []model.Account)
 	Seed()
 	Check() bool
 }
@@ -34,13 +35,13 @@ func (bc *BoltClient) OpenBoltDb() {
 }
 
 // QueryAccount returns a account indexed by id
-func (bc *BoltClient) QueryAccount(accoundID string) (account model.Account, err error) {
+func (bc *BoltClient) QueryAccount(username string) (account model.Account, err error) {
 
 	err = bc.boltDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("AccountBucket"))
-		accountBytes := b.Get([]byte(accoundID))
+		accountBytes := b.Get([]byte(username))
 		if accountBytes == nil {
-			return fmt.Errorf("No account found for " + accoundID)
+			return fmt.Errorf("No username found for " + username)
 		}
 
 		json.Unmarshal(accountBytes, &account)
@@ -50,19 +51,48 @@ func (bc *BoltClient) QueryAccount(accoundID string) (account model.Account, err
 	return  //bare return
 }
 
+//QueryAllDemoAccounts iterats over key/value pairs in a bucket
+func (bc *BoltClient) QueryAllDemoAccounts() (accounts []model.Account) {
+	bc.boltDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("AccountBucket"))
+		b.ForEach(func(k, v []byte) error {
+			account := model.Account{}
+			json.Unmarshal(v, &account)
+			accounts = append(accounts, account)
+			return nil
+		})
+		
+		return nil
+	})
+	return accounts
+}
+
 func (bc *BoltClient) CreateAccount(account *model.Account) (err error) {
-	var jsonByte []byte
-	if jsonByte, err = json.Marshal(account); err !=nil {
-		fmt.Errorf("cannnot marshal json: %v", err)
-		return err
+
+	err = bc.boltDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("AccountBucket"))
+		accountBytes := b.Get([]byte(account.UserName))
+		if accountBytes == nil {
+			return fmt.Errorf("No username found for " + account.UserName)
+		}
+		return nil
+	})
+
+	// return if user already exists
+	if err == nil {
+		return fmt.Errorf("User already exists: " + account.UserName)
 	}
+
 	err = bc.boltDB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("AccountBucket"))
-		err := b.Put([]byte(account.Id), jsonByte)
+		id, _ := b.NextSequence()
+		account.ID = (id)
+		jsonBytes, _ := json.Marshal(account)
+		err := b.Put([]byte(account.UserName), jsonBytes)
 		return err
 	})
 
-	return nil
+	return err
 }
 
 // Seed starts seeding accounts
@@ -78,7 +108,7 @@ func (bc *BoltClient) Check() bool {
 
 func (bc *BoltClient) initializeBucket() error {
 	return bc.boltDB.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucket([]byte("AccountBucket"))
+		_, err := tx.CreateBucketIfNotExists([]byte("AccountBucket"))
 		if err != nil {
 			return fmt.Errorf("create bucket failed: %s", err)
 		}
@@ -90,25 +120,21 @@ func (bc *BoltClient) initializeBucket() error {
 func (bc *BoltClient) seedDemoAccounts() {
 
 	total := 10
-	for i := 0; i < total; i++ {
+	for i := 1; i <= total; i++ {
 
-		// Generate a key 10000 or larger
-		key := strconv.Itoa(10000 + i)
-
-		// Create an instance of our Account struct
-		acc := model.Account{
-			Id:   	key,
-			Name: 	"user_" + strconv.Itoa(i),
-			Passwd:	"123456",
+		acc := model.Account {
+			UserName: 	"user_" + strconv.Itoa(i),
+			Name:		"DemoUser",
+			Passwd:		"123456",
 		}
-
-		// Serialize the struct to JSON
-		jsonBytes, _ := json.Marshal(acc)
 
 		// Write the data to the AccountBucket
 		bc.boltDB.Update(func(tx *bolt.Tx) error {
 			b := tx.Bucket([]byte("AccountBucket"))
-			err := b.Put([]byte(key), jsonBytes)
+			acc.ID = 0
+			jsonBytes, _ := json.Marshal(acc)
+			fmt.Printf("Account: %s\n", jsonBytes)
+			err := b.Put([]byte(acc.UserName), jsonBytes)
 			return err
 		})
 	}

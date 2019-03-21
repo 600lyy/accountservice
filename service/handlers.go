@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -20,21 +21,46 @@ var RedisClient dbclient.IRedisClient
 
 // GetAccount returns an account
 func GetAccount(w http.ResponseWriter, r *http.Request) {
-	var accountId = mux.Vars(r)["accountId"]
-	account, err := DBClient.QueryAccount(accountId)
+	var username = mux.Vars(r)["username"]
+	account, err := DBClient.QueryAccount(username)
 	if err != nil {
+		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	// account.ServedBy = getIP()
 
 	// If found, marshal into JSON, write headers and content
+	account.Passwd = ""
+	fmt.Println(account)
 	data, _ := json.Marshal(account)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }
+
+// GetAllDemoAccounts returns an account
+func GetAllDemoAccounts(w http.ResponseWriter, r *http.Request) {
+	accounts := DBClient.QueryAllDemoAccounts()
+	size := len(accounts)
+	if size == 0 {
+		log.Println("Account database is empty")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	//datas := make([]byte, size, size)
+
+	datas, _ := json.MarshalIndent(accounts, "", "    ")
+		//datas = append(datas, data...)
+	
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Length", strconv.Itoa(len(datas)))
+	w.WriteHeader(http.StatusOK)
+	w.Write(datas)
+}
+
 
 // HealthCheck is the handlerfunc for endpoint "check"
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
@@ -50,16 +76,28 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateAccount(w http.ResponseWriter, r *http.Request) {
+
 	account := model.Account{}
 	body, err := ioutil.ReadAll(&io.LimitedReader{r.Body, 10485760})
 	defer r.Body.Close()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
-	if err = json.Unmarshal(body, &account); err != nil {
-		fmt.Errorf("cannnot Unmarshal json: %v", err)
+	err = json.Unmarshal(body, &account)
+	if err != nil {
+		log.Println(err)
 	}
-	DBClient.CreateAccount(&account)
+
+	if err = DBClient.CreateAccount(&account); err != nil {
+		log.Printf("cannnot create account [%s]: %v", account.Name, err)
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Content-Length", strconv.Itoa(len("User Already Exists")))
+		w.Write([]byte("User Already Exists"))
+		return
+	}
 }
 
 func writeJSONResponse(w http.ResponseWriter, status int, data []byte) {

@@ -20,7 +20,7 @@ var routes = Routes{
 	Route{
 		Name:        "GetAccount",
 		Method:      "GET",
-		Pattern:     "/accounts/{accountId}",
+		Pattern:     "/accounts/{username}",
 		HandlerFunc: GetAccount,
 	},
 
@@ -32,10 +32,17 @@ var routes = Routes{
 	},
 
 	Route{
-		Name:        "Login",
+		Name:        "Signup",
 		Method:      "POST",
-		Pattern:     "/login",
+		Pattern:     "/signup",
 		HandlerFunc: CreateAccount,
+	},
+
+	Route{
+		Name:        "GetAllDemoAccounts",
+		Method:      "GET",
+		Pattern:     "/accounts	",
+		HandlerFunc: GetAllDemoAccounts,
 	},
 
 }
