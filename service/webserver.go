@@ -10,11 +10,11 @@ import (
 func StartWebServer(port string) {
 	log.Println("Starting HTTP server at " + port)
 	r := NewRouter()
+	r.NotFoundHandler = http.HandlerFunc(notFoundHandler) // display 404 html
 	http.Handle("/", r) 
 	// http.HandleFunc("/accounts", routes[0].HandlerFunc)
-	err := http.ListenAndServe(":" + port, nil)
+	err := http.ListenAndServe(":" + port, r)
 	if err != nil {
-		//log.Fatal("An error occurred starting HTTP listenser at port " + port)
 		log.Fatal("Error: " + err.Error())
 	}
 }

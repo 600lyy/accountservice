@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"net/http"
+	"html/template"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -77,6 +78,13 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 
 func CreateAccount(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method != http.MethodPost {
+		t := template.Must(template.ParseFiles(
+			"/home/autotest/go/src/github.com/600lyy/accountservice/templates/html/login/register.html"))
+		t.Execute(w, nil)
+		return
+	}
+
 	account := model.Account{}
 	body, err := ioutil.ReadAll(&io.LimitedReader{r.Body, 10485760})
 	defer r.Body.Close()
@@ -109,4 +117,29 @@ func writeJSONResponse(w http.ResponseWriter, status int, data []byte) {
 
 type healthCheckResponse struct {
 	Status string `json:"status"`
+}
+
+//UserLogin handles user login
+//Method GET to receive the form of /login/home.html 
+func UserLogin(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method)
+	if r.Method != http.MethodPost {
+		t := template.Must(template.ParseFiles(
+			"/home/autotest/go/src/github.com/600lyy/accountservice/templates/html/login/home.html"))
+		t.Execute(w, nil)
+		return
+	}
+}
+
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/" {
+		http.Redirect(w, r, "/login/index", http.StatusFound)
+		log.Println("Redirect request to /login")
+		return
+	}
+	t, err := template.ParseFiles("/home/autotest/go/src/github.com/600lyy/accountservice/templates/html/404.html")
+	if (err != nil) {
+		log.Println(err)
+	}
+	t.Execute(w, nil)
 }

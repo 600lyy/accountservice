@@ -32,9 +32,16 @@ var routes = Routes{
 	},
 
 	Route{
-		Name:        "Signup",
+		Name:        "Regisration",
 		Method:      "POST",
-		Pattern:     "/signup",
+		Pattern:     "/register",
+		HandlerFunc: CreateAccount,
+	},
+
+	Route{
+		Name:        "Regisration",
+		Method:      "GET",
+		Pattern:     "/register/index",
 		HandlerFunc: CreateAccount,
 	},
 
@@ -43,6 +50,20 @@ var routes = Routes{
 		Method:      "GET",
 		Pattern:     "/accounts	",
 		HandlerFunc: GetAllDemoAccounts,
+	},
+
+	Route{
+		Name:        "Login",
+		Method:      "POST",
+		Pattern:     "/login",
+		HandlerFunc: UserLogin,
+	},
+
+	Route{
+		Name:        "Login",
+		Method:      "GET",
+		Pattern:     "/login/index",
+		HandlerFunc: UserLogin,
 	},
 
 }
