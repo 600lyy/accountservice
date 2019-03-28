@@ -33,7 +33,6 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 
 	// If found, marshal into JSON, write headers and content
 	account.Passwd = ""
-	fmt.Println(account)
 	data, _ := json.Marshal(account)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
@@ -87,6 +86,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 
 	account := model.Account{}
 	body, err := ioutil.ReadAll(&io.LimitedReader{r.Body, 10485760})
+	
 	defer r.Body.Close()
 	if err != nil {
 		log.Println(err)
@@ -103,7 +103,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", strconv.Itoa(len("User Already Exists")))
-		w.Write([]byte("User Already Exists"))
+		w.Write([]byte(err.Error()))
 		return
 	}
 }
@@ -122,13 +122,40 @@ type healthCheckResponse struct {
 //UserLogin handles user login
 //Method GET to receive the form of /login/home.html 
 func UserLogin(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method)
+	//log.Println(r.Method)
+	var err error
 	if r.Method != http.MethodPost {
 		t := template.Must(template.ParseFiles(
 			"/home/autotest/go/src/github.com/600lyy/accountservice/templates/html/login/home.html"))
 		t.Execute(w, nil)
 		return
 	}
+
+	r.ParseForm()
+	log.Println(r.Form)
+	username := r.Form["username"][0]
+	
+	if username != "" {
+		account, _ := DBClient.QueryAccount(username)
+		password := r.Form["password"][0]
+		if password == account.Passwd {
+			err = nil
+		} else {
+			err = fmt.Errorf("authentication failed, check user password")
+		}
+	}
+	
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Content-Length", strconv.Itoa(len(err.Error())))
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
